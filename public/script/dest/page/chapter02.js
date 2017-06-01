@@ -42,15 +42,15 @@
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__(15);
 
 
-/***/ },
+/***/ }),
 /* 1 */,
 /* 2 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
 	 * jQuery JavaScript Library v1.9.0
@@ -9610,17 +9610,17 @@
 	module.exports = jQuery;
 
 
-/***/ },
+/***/ }),
 /* 3 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(__webpack_amd_options__) {module.exports = __webpack_amd_options__;
 
 	/* WEBPACK VAR INJECTION */}.call(exports, {}))
 
-/***/ },
+/***/ }),
 /* 4 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	// File:src/Three.js
 
@@ -44354,7 +44354,7 @@
 
 
 
-/***/ },
+/***/ }),
 /* 5 */,
 /* 6 */,
 /* 7 */,
@@ -44366,7 +44366,7 @@
 /* 13 */,
 /* 14 */,
 /* 15 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	var $ = __webpack_require__(2);
 	var Three = __webpack_require__(4);
@@ -44447,9 +44447,9 @@
 
 
 
-/***/ },
+/***/ }),
 /* 16 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	var $ = __webpack_require__(2);
 	var Three = __webpack_require__(4);
@@ -44523,9 +44523,9 @@
 
 
 
-/***/ },
+/***/ }),
 /* 17 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/*
 	1.使用多个材质createMultiMaterialObject,创建mesh对象；
@@ -44697,5 +44697,5 @@
 	}
 	module.exports = Chapter02Sencond;
 
-/***/ }
+/***/ })
 /******/ ]);

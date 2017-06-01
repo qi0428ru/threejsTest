@@ -42,15 +42,15 @@
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__(21);
 
 
-/***/ },
+/***/ }),
 /* 1 */,
 /* 2 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
 	 * jQuery JavaScript Library v1.9.0
@@ -9610,17 +9610,17 @@
 	module.exports = jQuery;
 
 
-/***/ },
+/***/ }),
 /* 3 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(__webpack_amd_options__) {module.exports = __webpack_amd_options__;
 
 	/* WEBPACK VAR INJECTION */}.call(exports, {}))
 
-/***/ },
+/***/ }),
 /* 4 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	// File:src/Three.js
 
@@ -44354,9 +44354,9 @@
 
 
 
-/***/ },
+/***/ }),
 /* 5 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/*
 	MeshLambertMaterial:用于暗淡，不光亮表面；
@@ -44454,10 +44454,10 @@
 	}
 	module.exports = HighMesh;
 
-/***/ },
+/***/ }),
 /* 6 */,
 /* 7 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/*
 	基础材质：MeshBasicMaterial。这种材质不考虑光照的影响，
@@ -44572,9 +44572,9 @@
 	}
 	module.exports = MeshBasicMaterial;
 
-/***/ },
+/***/ }),
 /* 8 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/**
 	 * @author mrdoob / http://mrdoob.com/
@@ -45681,9 +45681,9 @@
 	};
 
 
-/***/ },
+/***/ }),
 /* 9 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/**
 	 * @author mrdoob / http://mrdoob.com/
@@ -46621,9 +46621,9 @@
 	};
 
 
-/***/ },
+/***/ }),
 /* 10 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/*
 	基于深度着色的MeshDepthMaterial:这种材质的物体，
@@ -46726,9 +46726,9 @@
 	}
 	module.exports = MeshDepthMaterial;
 
-/***/ },
+/***/ }),
 /* 11 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/*
 	MeshFaceMaterial为每个面指定材质;
@@ -46803,9 +46803,9 @@
 	}
 	module.exports = MeshFaceMaterial;
 
-/***/ },
+/***/ }),
 /* 12 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/*计算法向颜色的MeshNormalMaterial
 	此材质不会对渲染时使用的颜色有任何影响
@@ -46915,7 +46915,7 @@
 	}
 	module.exports = MeshNormalMaterial;
 
-/***/ },
+/***/ }),
 /* 13 */,
 /* 14 */,
 /* 15 */,
@@ -46925,7 +46925,7 @@
 /* 19 */,
 /* 20 */,
 /* 21 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/*
 	材质
@@ -46959,5 +46959,5 @@
 
 
 
-/***/ }
+/***/ })
 /******/ ]);
