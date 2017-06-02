@@ -44,7 +44,7 @@
 /* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(15);
+	module.exports = __webpack_require__(16);
 
 
 /***/ }),
@@ -44365,15 +44365,16 @@
 /* 12 */,
 /* 13 */,
 /* 14 */,
-/* 15 */
+/* 15 */,
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var $ = __webpack_require__(2);
 	var Three = __webpack_require__(4);
 	//示例1
-	var Chapter02One = __webpack_require__(16);
+	var Chapter02One = __webpack_require__(17);
 	//示例2
-	var Chapter02Sencond = __webpack_require__(17);
+	var Chapter02Sencond = __webpack_require__(18);
 	var Charper02 = {
 	   init: function(){
 	      this.planeGeometry = null;
@@ -44448,7 +44449,7 @@
 
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var $ = __webpack_require__(2);
@@ -44524,7 +44525,7 @@
 
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/*

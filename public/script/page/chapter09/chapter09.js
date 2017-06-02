@@ -1,5 +1,5 @@
 var $ = require('../../lib/jquery-1.9.0.js');
-var THREE = require('../../lib/three.js');
+var THREE = require('../../lib/three.min.js');
 require('../../lib/ColladaLoader.js');
 
 var gngs_dict = {
@@ -199,10 +199,12 @@ var tempReq = function() {
    };
 
 function loadModel(chapter, callback) {
+
    var self = this;
    var modelPath = chapter.model_path;
    var texturePath = chapter.texture_path;
    var textureDict = chapter.texture_dict;
+   console.log(loader)
    loader.load(modelPath, function(collada) {
       var model = collada.scene;
       chapter.animations = collada.animations;
@@ -223,6 +225,7 @@ function loadModel(chapter, callback) {
          processArray(children);
 
          function processArray(array) {
+
             var forbiddenNames = ["Light", "Plane", "Camera", "Nullo"];
             var transparent = [];
             for (var i = 0; i < array.length; i++) {
@@ -247,7 +250,6 @@ function loadModel(chapter, callback) {
             if (mesh instanceof THREE.Mesh) {
                var material = mesh.material;
                var texture_img = textureDict[material.name];
-               console.log(texture_img)
                if (!texture_img) return;
                var file = texturePath + texture_img,
                   alpha = new THREE.Texture;
