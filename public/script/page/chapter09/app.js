@@ -24613,6 +24613,7 @@ function isMobile() {
    return isMob
 }
 function getParam(progress) {
+   //console.log('=======', progress);
    var isMob = isMobile();
    var isOpera = !! window.opr && !! opr.addons || !! window.opera || navigator.userAgent.indexOf(" OPR/") >= 0;
    var isFirefox = typeof InstallTrigger !== "undefined";
@@ -24627,6 +24628,7 @@ function getParam(progress) {
       }
       return progress.toFixed(2) * -.01
    } else {
+      //console.log('-------', progress);
       if (navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPod/i)) {
          return progress.toFixed(2) * -.005
       }
@@ -24682,7 +24684,7 @@ function KFASwiper(config) {
          alpha: true,
          logarithmicDepthBuffer: true
       });
-      renderer.setPixelRatio(window.devicePixelRatio);
+      //renderer.setPixelRatio(window.devicePixelRatio);
       renderer.setSize(window.innerWidth, window.innerHeight);
       container.appendChild(renderer.domElement);
       if (callback) callback.call()
@@ -24751,17 +24753,21 @@ function KFASwiper(config) {
       update(0)
    }
    function update(deltaY) {
-      if (timeStampControl) {
+      /*if (timeStampControl) {
          var deltaY = clock.getDelta()
       }
       if (chapterChanging) {
          return
-      }
+      }*/
+      console.log('%%%%%%%%%%%%', deltaY)
       if (Math.abs(deltaY) > 10) return;
       var current = currentChapter.benchmarkAnimation.currentTime;
+      console.log(current)
       var length = currentChapter.benchmarkAnimation.data.length;
       var deltaFrameTime = 0;
       var deltaFrameTime = climp(deltaY, 0 - current, currentChapter.benchmarkAnimation.data.length - current);
+      console.log('++++++++',deltaFrameTime)
+      console.log(currentChapter.benchmarkAnimation)
       currentChapter.benchmarkAnimation.update(deltaFrameTime);
       for (var i = 0; i < currentChapter.kfAnimationsLength; ++i) {
          if (current < currentChapter.kfAnimations[i].data.length) {
@@ -24802,6 +24808,7 @@ function KFASwiper(config) {
             stopAnimation();
             var progress = coords.y - lastTimestamp;
             var param = getParam(progress);
+
             update(param);
             if (scrollCallback) {
                scrollCallback.call(window, coords.y)

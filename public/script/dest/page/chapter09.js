@@ -9625,9 +9625,163 @@
 /***/ 35:
 /***/ (function(module, exports, __webpack_require__) {
 
-	var $ = __webpack_require__(2);
+	/*
+	collada + KeyFrameAnimation
+
+	使用THREE.ColladaLoader实现动画的过程：
+	1.有一个包含场景动画的xml(.js)的文件
+	2.创建场景，load xml(js)文件,将文件的动作转化为KeyFrameAnimation动画
+	3.监听动作事件更新动画
+	注：更新动画的原理：
+	benchmarkAnimation：collada生成的对象的属性；
+	获取当前所处的时间，计算更新的参数，进行更新，注意，这里更新时要去设置timeScale,否则会根据默认的timeScale去更新。默认timeScale为0.0001
+	这样也就通过程序控制了xml文件的动画更新
+	var current = currentChapter.benchmarkAnimation.currentTime;
+	var length = currentChapter.benchmarkAnimation.data.length;
+	var deltaFrameTime = 0;
+	var deltaFrameTime = climp(deltaY, 0 - current, currentChapter.benchmarkAnimation.data.length - current);
+	currentChapter.benchmarkAnimation.update(deltaFrameTime);
+	for (var i = 0; i < currentChapter.kfAnimationsLength; ++i) {
+	   if (current < currentChapter.kfAnimations[i].data.length) {
+	      currentChapter.kfAnimations[i].currentTime = currentChapter.benchmarkAnimation.currentTime;
+	      currentChapter.kfAnimations[i].update(0)
+	   }
+	}
+	startAnimation();
+	renderer.render(currentChapter.scene, currentChapter.camera)
+	*/
+
+	var jQuery = __webpack_require__(2);
 	var THREE = __webpack_require__(36);
 	__webpack_require__(37);
+	__webpack_require__(38);
+	__webpack_require__(39);
+	__webpack_require__(40);
+	jQuery.fn.momentus = function(cfg) {
+	   var now = Date.now ||
+	   function() {
+	      return (new Date).valueOf()
+	   }, start_point = {
+	      x: 0,
+	      y: 0
+	   }, last_point = {
+	      x: 0,
+	      y: 0
+	   }, current_coords = {
+	      x: 0,
+	      y: 0
+	   }, last_coords = {
+	      x: 0,
+	      y: 0
+	   }, velocity = {
+	      x: 0,
+	      y: 0
+	   }, last_time = now(), inertia_time = last_time, mass = cfg.mass || 1e3, u = cfg.u || 4, wheel_ratio = cfg.wheelRatio || 1e3, mouse_ratio = cfg.mouseRatio || 20, touch_ratio = cfg.touchRatio || 2, on_change = cfg.onChange ||
+	   function() {}, frame_rate = cfg.frameRate || 60;
+
+	   function calculateVelocity(e) {
+	      var time = now(),
+	         delta_time = time - last_time,
+	         vel_x = velocity.x + last_coords.x / delta_time / (e.pageX ? mouse_ratio : touch_ratio),
+	         vel_y = velocity.y + last_coords.y / delta_time / (e.pageY ? mouse_ratio : touch_ratio);
+	      vel_x = !isNaN(vel_x) ? vel_x : 0;
+	      vel_y = !isNaN(vel_y) ? vel_y : 0;
+	      return {
+	         x: vel_x,
+	         y: vel_y
+	      }
+	   }
+	   var self = this;
+	   $(this).on("mousedown touchstart", function(e) {
+	      e.preventDefault();
+	      var x = e.pageX || e.originalEvent.touches[0].pageX,
+	         y = e.pageY || e.originalEvent.touches[0].pageY;
+	      last_coords = {
+	         x: 0,
+	         y: 0
+	      };
+	      start_point = {
+	         x: x,
+	         y: y
+	      };
+	      velocity = {
+	         x: 0,
+	         y: 0
+	      };
+	      on_change(current_coords, velocity);
+	      $("body").on("mousemove touchmove", function(e) {
+	         e.preventDefault();
+	         var vel = calculateVelocity(e);
+	         last_time = now();
+	         var x = e.pageX || e.originalEvent.touches[0].pageX,
+	            y = e.pageY || e.originalEvent.touches[0].pageY,
+	            delta_x = x - start_point.x,
+	            delta_y = y - start_point.y;
+	         last_point = start_point;
+	         start_point = {
+	            x: x,
+	            y: y
+	         };
+	         last_coords.x = delta_x;
+	         last_coords.y = delta_y;
+	         current_coords.x += delta_x;
+	         current_coords.y += delta_y;
+	         on_change(current_coords, vel);
+	         $(self).trigger("mousewheel")
+	      });
+	      $("body").on("mouseup touchend", function(e) {
+	         velocity = calculateVelocity(e);
+	         on_change(current_coords, velocity);
+	         inertia_time = null;
+	         $("body").off("mousemove touchmove mouseup touchend")
+	      })
+	   });
+	   $(this).on("wheel mousewheel", function(e) {
+	      if (velocity.x == 0 && velocity.y == 0) inertia_time = now();
+	      var delta_x, delta_y;
+	      if (e.originalEvent) {
+	         delta_x = e.originalEvent.deltaX || 0, delta_y = e.originalEvent.deltaY || 0
+	      } else {
+	         delta_x = 0, delta_y = 0
+	      }
+	      velocity.x -= delta_x / wheel_ratio;
+	      velocity.y -= delta_y / wheel_ratio
+	   });
+	   (function inertia() {
+	      velocity.x = !isNaN(velocity.x) ? velocity.x : 0;
+	      velocity.y = !isNaN(velocity.y) ? velocity.y : 0;
+	      if (!inertia_time) {
+	         inertia_time = now()
+	      } else if (velocity.x != 0 || velocity.y != 0) {
+	         var time = now(),
+	            force_x = velocity.x * u,
+	            force_y = velocity.y * u,
+	            acc_x = force_x / mass,
+	            acc_y = force_y / mass,
+	            delta_time = time - inertia_time,
+	            vel_x = velocity.x - acc_x * delta_time,
+	            vel_y = velocity.y - acc_y * delta_time;
+	         vel_x = !isNaN(vel_x) ? vel_x : 0;
+	         vel_y = !isNaN(vel_y) ? vel_y : 0;
+	         velocity.x = vel_x;
+	         velocity.y = vel_y;
+	         var delta_x = vel_x * delta_time,
+	            delta_y = vel_y * delta_time;
+	         last_coords.x = current_coords.x;
+	         last_coords.y = current_coords.y;
+	         current_coords.x += delta_x;
+	         current_coords.y += delta_y;
+	         inertia_time = time;
+	         on_change(current_coords, velocity)
+	      }
+	      if (window.requestAnimationFrame) {
+	         requestAnimationFrame(inertia)
+	      } else {
+	         setTimeout(inertia, 1e3 / frame_rate)
+	      }
+	   })();
+	   return this
+	};
 
 	var gngs_dict = {
 	   "材质.35": "liuchuanfeng-b.png",
@@ -9683,10 +9837,46 @@
 	var defaultCameraFar = 6e3;
 	var renderer;
 	var currentChapter = null;
+	var currentChapterIndex = chapterIndex = 0;
 	var loader = new THREE.ColladaLoader;
+	var wrapper = document.getElementById("kfa-wrapper");
+	var timeStampControl = false;
+	var timeScale = 1.2;
+	var createScollSensor = function(wrapper) {
+	   var scrollSensor = document.createElement("div");
+	   if (!wrapper) wrapper = document.body;
+	   scrollSensor.className = "kfa-scroll-sensor";
+	   scrollSensor.style.cssText = "position:absolute;width:100%;height:100%;z-index:2;top:0";
+	   wrapper.appendChild(scrollSensor);
+	   return scrollSensor
+	};
+	var progressCallback = function(innerChapterIndex, progress){
+	   /*if (chapterIndex === 0) {
+	      if (progress < 5 && progress > .5) {
+	         msgop.fadeOut()
+	      } else if (progress < .5) {
+	         msgop.fadeIn()
+	      }
+	   } else if (chapterIndex === 4) {
+	      if (progress > 4 && progress < 7.6) {
+	         msgmsn.fadeIn()
+	      } else {
+	         msgmsn.fadeOut()
+	      }
+	   }
+	   if (progress > edtime) {
+	      edlay.fadeIn(600)
+	   } else {
+	      edlay.fadeOut(600)
+	   }*/
+	}
+	var textureLoadingCallback = function(item, loaded, total) {}
+	var scrollCallback = function(deltaY){}
+	var scrollSensor = createScollSensor();
 	function initRenderer(callback) {
-	   var container = document.getElementById("WebGL-output");
-	   //container.className = "chapter";
+	   container = document.createElement("div");
+	   wrapper.appendChild(container);
+	   container.className = "chapter";
 	   renderer = new THREE.WebGLRenderer({
 	      antialias: true,
 	      alpha: true,
@@ -9694,6 +9884,7 @@
 	   });
 	   //renderer.setPixelRatio(window.devicePixelRatio);
 	   renderer.setSize(window.innerWidth, window.innerHeight);
+	   
 	   container.appendChild(renderer.domElement);
 	   if (callback) callback.call()
 	}
@@ -9707,8 +9898,38 @@
 	      initScene(chapter, function() {
 	         window.scene = currentChapter.scene;
 	         start();
+	         bindEventListeners();
 	      })
 	   });
+	}
+
+	function isMobile() {
+	   var isMob = false;
+	   if (/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|ipad|iris|kindle|Android|Silk|lge |maemo|midp|mmp|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino/i.test(navigator.userAgent) || /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(navigator.userAgent.substr(0, 4))) isMob = true;
+	   return isMob
+	}
+	function getParam(progress) {
+	   //console.log('=======', progress);
+	   var isMob = isMobile();
+	   var isOpera = !! window.opr && !! opr.addons || !! window.opera || navigator.userAgent.indexOf(" OPR/") >= 0;
+	   var isFirefox = typeof InstallTrigger !== "undefined";
+	   var isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf("Constructor") > 0;
+	   var isIE = false || !! document.documentMode;
+	   var isEdge = !isIE && !! window.StyleMedia;
+	   var isChrome = !! window.chrome && !! window.chrome.webstore;
+	   var isBlink = (isChrome || isOpera) && !! window.CSS;
+	   if (!isMob) {
+	      if (isFirefox) {
+	         return progress.toFixed(2) * -.1
+	      }
+	      return progress.toFixed(2) * -.01
+	   } else {
+	      //console.log('-----', progress);
+	      if (navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPod/i)) {
+	         return progress.toFixed(2) * -.005
+	      }
+	      return progress.toFixed(2) * -.01
+	   }
 	}
 	function initScene(chapter, callback) {
 	   var scene = new THREE.Scene;
@@ -9718,9 +9939,10 @@
 	      var animation = chapter.animations[i];
 	      var kfAnimation = new THREE.KeyFrameAnimation(animation);
 	      kfAnimation.loop = false;
-	      //kfAnimation.timeScale = timeScale;
+	      kfAnimation.timeScale = timeScale;
 	      chapter.kfAnimations.push(kfAnimation);
 	      if (animation.length > longestAnimationLength) {
+	         //console.log(kfAnimation)
 	         chapter.benchmarkAnimation = kfAnimation;
 	         longestAnimationLength = animation.length
 	      }
@@ -9779,15 +10001,7 @@
 	   }
 	}
 	function update(deltaY) {
-	   /*if (timeStampControl) {
-	      var deltaY = clock.getDelta()
-	   }
-	   if (chapterChanging) {
-	      return
-	   }
-	   var clock = new THREE.Clock
-	   var deltaY = clock.getDelta()
-	   if (Math.abs(deltaY) > 10) return;*/
+	   if (Math.abs(deltaY) > 10) return;
 	   var current = currentChapter.benchmarkAnimation.currentTime;
 	   var length = currentChapter.benchmarkAnimation.data.length;
 	   var deltaFrameTime = 0;
@@ -9824,7 +10038,24 @@
 	      update(0);
 	      loop()
 	   };
-
+	function bindEventListeners() {
+	   var lastTimestamp = 0;
+	   $(scrollSensor).momentus({
+	      onChange: function(coords) {
+	         stopAnimation();
+	         var progress = coords.y - lastTimestamp;
+	         var param = getParam(progress);
+	         update(param);
+	         if (scrollCallback) {
+	            scrollCallback.call(window, coords.y)
+	         }
+	         if (progressCallback) {
+	            progressCallback.call(window, currentChapterIndex, currentChapter.benchmarkAnimation.currentTime)
+	         }
+	         lastTimestamp = coords.y
+	      }
+	   })
+	}
 	function loadModel(chapter, callback) {
 
 	   var self = this;
@@ -9844,7 +10075,7 @@
 	            /*if (loadingText && loadedIndex === 0) {
 	               percentage.innerText = 50 + parseInt(loaded / total * 100 / 2)
 	            }*/
-	            //textureLoadingCallback.call(window, item, loaded, total)
+	            textureLoadingCallback.call(window, item, loaded, total)
 	         };
 	         var loader = new THREE.ImageLoader(manager);
 	         loader.crossOrigin = true;
@@ -9894,6 +10125,7 @@
 	   })
 	}
 	init();
+	renderer = renderer;
 
 
 /***/ }),
@@ -16313,6 +16545,888 @@
 			options: options
 
 		};
+
+	};
+
+/***/ }),
+
+/***/ 38:
+/***/ (function(module, exports, __webpack_require__) {
+
+	/**
+	 * @author mikael emtinger / http://gomo.se/
+	 * @author mrdoob / http://mrdoob.com/
+	 * @author alteredq / http://alteredqualia.com/
+	 */
+	var THREE = __webpack_require__(36);
+	THREE.Animation = function ( root, data ) {
+
+	   this.root = root;
+	   this.data = THREE.AnimationHandler.init( data );
+	   this.hierarchy = THREE.AnimationHandler.parse( root );
+
+	   this.currentTime = 0;
+	   this.timeScale = 1;
+
+	   this.isPlaying = false;
+	   this.loop = true;
+	   this.weight = 0;
+
+	   this.interpolationType = THREE.AnimationHandler.LINEAR;
+
+	};
+
+	THREE.Animation.prototype = {
+
+	   constructor: THREE.Animation,
+
+	   keyTypes:  [ "pos", "rot", "scl" ],
+
+	   play: function ( startTime, weight ) {
+
+	      this.currentTime = startTime !== undefined ? startTime : 0;
+	      this.weight = weight !== undefined ? weight : 1;
+
+	      this.isPlaying = true;
+
+	      this.reset();
+
+	      THREE.AnimationHandler.play( this );
+
+	   },
+
+	   stop: function() {
+
+	      this.isPlaying = false;
+
+	      THREE.AnimationHandler.stop( this );
+
+	   },
+
+	   reset: function () {
+
+	      for ( var h = 0, hl = this.hierarchy.length; h < hl; h ++ ) {
+
+	         var object = this.hierarchy[ h ];
+
+	         if ( object.animationCache === undefined ) {
+
+	            object.animationCache = {
+	               animations: {},
+	               blending: {
+	                  positionWeight: 0.0,
+	                  quaternionWeight: 0.0,
+	                  scaleWeight: 0.0
+	               }
+	            };
+
+	         }
+
+	         var name = this.data.name;
+	         var animations = object.animationCache.animations;
+	         var animationCache = animations[ name ];
+
+	         if ( animationCache === undefined ) {
+
+	            animationCache = {
+	               prevKey: { pos: 0, rot: 0, scl: 0 },
+	               nextKey: { pos: 0, rot: 0, scl: 0 },
+	               originalMatrix: object.matrix
+	            };
+
+	            animations[ name ] = animationCache;
+
+	         }
+
+	         // Get keys to match our current time
+
+	         for ( var t = 0; t < 3; t ++ ) {
+
+	            var type = this.keyTypes[ t ];
+
+	            var prevKey = this.data.hierarchy[ h ].keys[ 0 ];
+	            var nextKey = this.getNextKeyWith( type, h, 1 );
+
+	            while ( nextKey.time < this.currentTime && nextKey.index > prevKey.index ) {
+
+	               prevKey = nextKey;
+	               nextKey = this.getNextKeyWith( type, h, nextKey.index + 1 );
+
+	            }
+
+	            animationCache.prevKey[ type ] = prevKey;
+	            animationCache.nextKey[ type ] = nextKey;
+
+	         }
+
+	      }
+
+	   },
+
+	   resetBlendWeights: function () {
+
+	      for ( var h = 0, hl = this.hierarchy.length; h < hl; h ++ ) {
+
+	         var object = this.hierarchy[ h ];
+	         var animationCache = object.animationCache;
+
+	         if ( animationCache !== undefined ) {
+
+	            var blending = animationCache.blending;
+
+	            blending.positionWeight = 0.0;
+	            blending.quaternionWeight = 0.0;
+	            blending.scaleWeight = 0.0;
+
+	         }
+
+	      }
+
+	   },
+
+	   update: ( function() {
+
+	      var points = [];
+	      var target = new THREE.Vector3();
+	      var newVector = new THREE.Vector3();
+	      var newQuat = new THREE.Quaternion();
+
+	      // Catmull-Rom spline
+
+	      var interpolateCatmullRom = function ( points, scale ) {
+
+	         var c = [], v3 = [],
+	         point, intPoint, weight, w2, w3,
+	         pa, pb, pc, pd;
+
+	         point = ( points.length - 1 ) * scale;
+	         intPoint = Math.floor( point );
+	         weight = point - intPoint;
+
+	         c[ 0 ] = intPoint === 0 ? intPoint : intPoint - 1;
+	         c[ 1 ] = intPoint;
+	         c[ 2 ] = intPoint > points.length - 2 ? intPoint : intPoint + 1;
+	         c[ 3 ] = intPoint > points.length - 3 ? intPoint : intPoint + 2;
+
+	         pa = points[ c[ 0 ] ];
+	         pb = points[ c[ 1 ] ];
+	         pc = points[ c[ 2 ] ];
+	         pd = points[ c[ 3 ] ];
+
+	         w2 = weight * weight;
+	         w3 = weight * w2;
+
+	         v3[ 0 ] = interpolate( pa[ 0 ], pb[ 0 ], pc[ 0 ], pd[ 0 ], weight, w2, w3 );
+	         v3[ 1 ] = interpolate( pa[ 1 ], pb[ 1 ], pc[ 1 ], pd[ 1 ], weight, w2, w3 );
+	         v3[ 2 ] = interpolate( pa[ 2 ], pb[ 2 ], pc[ 2 ], pd[ 2 ], weight, w2, w3 );
+
+	         return v3;
+
+	      };
+
+	      var interpolate = function ( p0, p1, p2, p3, t, t2, t3 ) {
+
+	         var v0 = ( p2 - p0 ) * 0.5,
+	            v1 = ( p3 - p1 ) * 0.5;
+
+	         return ( 2 * ( p1 - p2 ) + v0 + v1 ) * t3 + ( - 3 * ( p1 - p2 ) - 2 * v0 - v1 ) * t2 + v0 * t + p1;
+
+	      };
+
+	      return function ( delta ) {
+
+	         if ( this.isPlaying === false ) return;
+
+	         this.currentTime += delta * this.timeScale;
+
+	         if ( this.weight === 0 )
+	            return;
+
+	         //
+
+	         var duration = this.data.length;
+
+	         if ( this.currentTime > duration || this.currentTime < 0 ) {
+
+	            if ( this.loop ) {
+
+	               this.currentTime %= duration;
+
+	               if ( this.currentTime < 0 )
+	                  this.currentTime += duration;
+
+	               this.reset();
+
+	            } else {
+
+	               this.stop();
+
+	            }
+
+	         }
+
+	         for ( var h = 0, hl = this.hierarchy.length; h < hl; h ++ ) {
+
+	            var object = this.hierarchy[ h ];
+	            var animationCache = object.animationCache.animations[ this.data.name ];
+	            var blending = object.animationCache.blending;
+
+	            // loop through pos/rot/scl
+
+	            for ( var t = 0; t < 3; t ++ ) {
+
+	               // get keys
+
+	               var type    = this.keyTypes[ t ];
+	               var prevKey = animationCache.prevKey[ type ];
+	               var nextKey = animationCache.nextKey[ type ];
+
+	               if ( ( this.timeScale > 0 && nextKey.time <= this.currentTime ) ||
+	                  ( this.timeScale < 0 && prevKey.time >= this.currentTime ) ) {
+
+	                  prevKey = this.data.hierarchy[ h ].keys[ 0 ];
+	                  nextKey = this.getNextKeyWith( type, h, 1 );
+
+	                  while ( nextKey.time < this.currentTime && nextKey.index > prevKey.index ) {
+
+	                     prevKey = nextKey;
+	                     nextKey = this.getNextKeyWith( type, h, nextKey.index + 1 );
+
+	                  }
+
+	                  animationCache.prevKey[ type ] = prevKey;
+	                  animationCache.nextKey[ type ] = nextKey;
+
+	               }
+
+	               var scale = ( this.currentTime - prevKey.time ) / ( nextKey.time - prevKey.time );
+
+	               var prevXYZ = prevKey[ type ];
+	               var nextXYZ = nextKey[ type ];
+
+	               if ( scale < 0 ) scale = 0;
+	               if ( scale > 1 ) scale = 1;
+
+	               // interpolate
+
+	               if ( type === "pos" ) {
+
+	                  if ( this.interpolationType === THREE.AnimationHandler.LINEAR ) {
+
+	                     newVector.x = prevXYZ[ 0 ] + ( nextXYZ[ 0 ] - prevXYZ[ 0 ] ) * scale;
+	                     newVector.y = prevXYZ[ 1 ] + ( nextXYZ[ 1 ] - prevXYZ[ 1 ] ) * scale;
+	                     newVector.z = prevXYZ[ 2 ] + ( nextXYZ[ 2 ] - prevXYZ[ 2 ] ) * scale;
+
+	                     // blend
+	                     var proportionalWeight = this.weight / ( this.weight + blending.positionWeight );
+	                     object.position.lerp( newVector, proportionalWeight );
+	                     blending.positionWeight += this.weight;
+
+	                  } else if ( this.interpolationType === THREE.AnimationHandler.CATMULLROM ||
+	                           this.interpolationType === THREE.AnimationHandler.CATMULLROM_FORWARD ) {
+
+	                     points[ 0 ] = this.getPrevKeyWith( "pos", h, prevKey.index - 1 )[ "pos" ];
+	                     points[ 1 ] = prevXYZ;
+	                     points[ 2 ] = nextXYZ;
+	                     points[ 3 ] = this.getNextKeyWith( "pos", h, nextKey.index + 1 )[ "pos" ];
+
+	                     scale = scale * 0.33 + 0.33;
+
+	                     var currentPoint = interpolateCatmullRom( points, scale );
+	                     var proportionalWeight = this.weight / ( this.weight + blending.positionWeight );
+	                     blending.positionWeight += this.weight;
+
+	                     // blend
+
+	                     var vector = object.position;
+
+	                     vector.x = vector.x + ( currentPoint[ 0 ] - vector.x ) * proportionalWeight;
+	                     vector.y = vector.y + ( currentPoint[ 1 ] - vector.y ) * proportionalWeight;
+	                     vector.z = vector.z + ( currentPoint[ 2 ] - vector.z ) * proportionalWeight;
+
+	                     if ( this.interpolationType === THREE.AnimationHandler.CATMULLROM_FORWARD ) {
+
+	                        var forwardPoint = interpolateCatmullRom( points, scale * 1.01 );
+
+	                        target.set( forwardPoint[ 0 ], forwardPoint[ 1 ], forwardPoint[ 2 ] );
+	                        target.sub( vector );
+	                        target.y = 0;
+	                        target.normalize();
+
+	                        var angle = Math.atan2( target.x, target.z );
+	                        object.rotation.set( 0, angle, 0 );
+
+	                     }
+
+	                  }
+
+	               } else if ( type === "rot" ) {
+
+	                  THREE.Quaternion.slerp( prevXYZ, nextXYZ, newQuat, scale );
+
+	                  // Avoid paying the cost of an additional slerp if we don't have to
+	                  if ( blending.quaternionWeight === 0 ) {
+
+	                     object.quaternion.copy( newQuat );
+	                     blending.quaternionWeight = this.weight;
+
+	                  } else {
+
+	                     var proportionalWeight = this.weight / ( this.weight + blending.quaternionWeight );
+	                     THREE.Quaternion.slerp( object.quaternion, newQuat, object.quaternion, proportionalWeight );
+	                     blending.quaternionWeight += this.weight;
+
+	                  }
+
+	               } else if ( type === "scl" ) {
+
+	                  newVector.x = prevXYZ[ 0 ] + ( nextXYZ[ 0 ] - prevXYZ[ 0 ] ) * scale;
+	                  newVector.y = prevXYZ[ 1 ] + ( nextXYZ[ 1 ] - prevXYZ[ 1 ] ) * scale;
+	                  newVector.z = prevXYZ[ 2 ] + ( nextXYZ[ 2 ] - prevXYZ[ 2 ] ) * scale;
+
+	                  var proportionalWeight = this.weight / ( this.weight + blending.scaleWeight );
+	                  object.scale.lerp( newVector, proportionalWeight );
+	                  blending.scaleWeight += this.weight;
+
+	               }
+
+	            }
+
+	         }
+
+	         return true;
+
+	      };
+
+	   } )(),
+
+	   getNextKeyWith: function ( type, h, key ) {
+
+	      var keys = this.data.hierarchy[ h ].keys;
+
+	      if ( this.interpolationType === THREE.AnimationHandler.CATMULLROM ||
+	          this.interpolationType === THREE.AnimationHandler.CATMULLROM_FORWARD ) {
+
+	         key = key < keys.length - 1 ? key : keys.length - 1;
+
+	      } else {
+
+	         key = key % keys.length;
+
+	      }
+
+	      for ( ; key < keys.length; key ++ ) {
+
+	         if ( keys[ key ][ type ] !== undefined ) {
+
+	            return keys[ key ];
+
+	         }
+
+	      }
+
+	      return this.data.hierarchy[ h ].keys[ 0 ];
+
+	   },
+
+	   getPrevKeyWith: function ( type, h, key ) {
+
+	      var keys = this.data.hierarchy[ h ].keys;
+
+	      if ( this.interpolationType === THREE.AnimationHandler.CATMULLROM ||
+	         this.interpolationType === THREE.AnimationHandler.CATMULLROM_FORWARD ) {
+
+	         key = key > 0 ? key : 0;
+
+	      } else {
+
+	         key = key >= 0 ? key : key + keys.length;
+
+	      }
+
+
+	      for ( ; key >= 0; key -- ) {
+
+	         if ( keys[ key ][ type ] !== undefined ) {
+
+	            return keys[ key ];
+
+	         }
+
+	      }
+
+	      return this.data.hierarchy[ h ].keys[ keys.length - 1 ];
+
+	   }
+
+	};
+
+/***/ }),
+
+/***/ 39:
+/***/ (function(module, exports, __webpack_require__) {
+
+	/**
+	 * @author mikael emtinger / http://gomo.se/
+	 * @author mrdoob / http://mrdoob.com/
+	 * @author alteredq / http://alteredqualia.com/
+	 * @author khang duong
+	 * @author erik kitson
+	 */
+	var THREE = __webpack_require__(36);
+	THREE.KeyFrameAnimation = function ( data ) {
+
+	   this.root = data.node;
+	   this.data = THREE.AnimationHandler.init( data );
+	   this.hierarchy = THREE.AnimationHandler.parse( this.root );
+	   this.currentTime = 0;
+	   this.timeScale = 0.001;
+	   this.isPlaying = false;
+	   this.isPaused = true;
+	   this.loop = true;
+
+	   // initialize to first keyframes
+
+	   for ( var h = 0, hl = this.hierarchy.length; h < hl; h ++ ) {
+
+	      var keys = this.data.hierarchy[ h ].keys,
+	         sids = this.data.hierarchy[ h ].sids,
+	         obj = this.hierarchy[ h ];
+
+	      if ( keys.length && sids ) {
+
+	         for ( var s = 0; s < sids.length; s ++ ) {
+
+	            var sid = sids[ s ],
+	               next = this.getNextKeyWith( sid, h, 0 );
+
+	            if ( next ) {
+
+	               next.apply( sid );
+
+	            }
+
+	         }
+
+	         obj.matrixAutoUpdate = false;
+	         this.data.hierarchy[ h ].node.updateMatrix();
+	         obj.matrixWorldNeedsUpdate = true;
+
+	      }
+
+	   }
+
+	};
+
+	THREE.KeyFrameAnimation.prototype = {
+
+	   constructor: THREE.KeyFrameAnimation,
+
+	   play: function ( startTime ) {
+
+	      this.currentTime = startTime !== undefined ? startTime : 0;
+
+	      if ( this.isPlaying === false ) {
+
+	         this.isPlaying = true;
+
+	         // reset key cache
+
+	         var h, hl = this.hierarchy.length,
+	            object,
+	            node;
+
+	         for ( h = 0; h < hl; h ++ ) {
+
+	            object = this.hierarchy[ h ];
+	            node = this.data.hierarchy[ h ];
+
+	            if ( node.animationCache === undefined ) {
+
+	               node.animationCache = {};
+	               node.animationCache.prevKey = null;
+	               node.animationCache.nextKey = null;
+	               node.animationCache.originalMatrix = object.matrix;
+
+	            }
+
+	            var keys = this.data.hierarchy[ h ].keys;
+
+	            if ( keys.length > 1 ) {
+
+	               node.animationCache.prevKey = keys[ 0 ];
+	               node.animationCache.nextKey = keys[ 1 ];
+
+	               this.startTime = Math.min( keys[ 0 ].time, this.startTime );
+	               this.endTime = Math.max( keys[ keys.length - 1 ].time, this.endTime );
+
+	            }
+
+	         }
+
+	         this.update( 0 );
+
+	      }
+
+	      this.isPaused = false;
+	   },
+
+	   stop: function () {
+
+	      this.isPlaying = false;
+	      this.isPaused  = false;
+
+	      // reset JIT matrix and remove cache
+
+	      for ( var h = 0; h < this.data.hierarchy.length; h ++ ) {
+
+	         var obj = this.hierarchy[ h ];
+	         var node = this.data.hierarchy[ h ];
+
+	         if ( node.animationCache !== undefined ) {
+
+	            var original = node.animationCache.originalMatrix;
+
+	            original.copy( obj.matrix );
+	            obj.matrix = original;
+
+	            delete node.animationCache;
+
+	         }
+
+	      }
+
+	   },
+
+	   update: function ( delta ) {
+
+	      if ( this.isPlaying === false ) return;
+
+	      this.currentTime += delta * this.timeScale;
+
+	      //
+
+	      var duration = this.data.length;
+
+	      if ( this.loop === true && this.currentTime > duration ) {
+
+	         this.currentTime %= duration;
+
+	      }
+
+	      this.currentTime = Math.min( this.currentTime, duration );
+
+	      for ( var h = 0, hl = this.hierarchy.length; h < hl; h ++ ) {
+
+	         var object = this.hierarchy[ h ];
+	         var node = this.data.hierarchy[ h ];
+
+	         var keys = node.keys,
+	            animationCache = node.animationCache;
+
+
+	         if ( keys.length ) {
+
+	            var prevKey = animationCache.prevKey;
+	            var nextKey = animationCache.nextKey;
+
+	            if ( nextKey.time <= this.currentTime ) {
+
+	               while ( nextKey.time < this.currentTime && nextKey.index > prevKey.index ) {
+
+	                  prevKey = nextKey;
+	                  nextKey = keys[ prevKey.index + 1 ];
+
+	               }
+
+	               animationCache.prevKey = prevKey;
+	               animationCache.nextKey = nextKey;
+
+	            }
+
+	            if ( nextKey.time >= this.currentTime ) {
+
+	               prevKey.interpolate( nextKey, this.currentTime );
+
+	            } else {
+
+	               prevKey.interpolate( nextKey, nextKey.time );
+
+	            }
+
+	            this.data.hierarchy[ h ].node.updateMatrix();
+	            object.matrixWorldNeedsUpdate = true;
+
+	         }
+
+	      }
+
+	   },
+
+	   getNextKeyWith: function ( sid, h, key ) {
+
+	      var keys = this.data.hierarchy[ h ].keys;
+	      key = key % keys.length;
+
+	      for ( ; key < keys.length; key ++ ) {
+
+	         if ( keys[ key ].hasTarget( sid ) ) {
+
+	            return keys[ key ];
+
+	         }
+
+	      }
+
+	      return keys[ 0 ];
+
+	   },
+
+	   getPrevKeyWith: function ( sid, h, key ) {
+
+	      var keys = this.data.hierarchy[ h ].keys;
+	      key = key >= 0 ? key : key + keys.length;
+
+	      for ( ; key >= 0; key -- ) {
+
+	         if ( keys[ key ].hasTarget( sid ) ) {
+
+	            return keys[ key ];
+
+	         }
+
+	      }
+
+	      return keys[ keys.length - 1 ];
+
+	   }
+
+	};
+
+/***/ }),
+
+/***/ 40:
+/***/ (function(module, exports, __webpack_require__) {
+
+	/**
+	 * @author mikael emtinger / http://gomo.se/
+	 */
+	var THREE = __webpack_require__(36);
+
+	THREE.AnimationHandler = {
+
+	   LINEAR: 0,
+	   CATMULLROM: 1,
+	   CATMULLROM_FORWARD: 2,
+
+	   //
+
+	   add: function () {
+
+	      console.warn( 'THREE.AnimationHandler.add() has been deprecated.' );
+
+	   },
+	   get: function () {
+
+	      console.warn( 'THREE.AnimationHandler.get() has been deprecated.' );
+
+	   },
+	   remove: function () {
+
+	      console.warn( 'THREE.AnimationHandler.remove() has been deprecated.' );
+
+	   },
+
+	   //
+
+	   animations: [],
+
+	   init: function ( data ) {
+
+	      if ( data.initialized === true ) return data;
+
+	      // loop through all keys
+
+	      for ( var h = 0; h < data.hierarchy.length; h ++ ) {
+
+	         for ( var k = 0; k < data.hierarchy[ h ].keys.length; k ++ ) {
+
+	            // remove minus times
+
+	            if ( data.hierarchy[ h ].keys[ k ].time < 0 ) {
+
+	                data.hierarchy[ h ].keys[ k ].time = 0;
+
+	            }
+
+	            // create quaternions
+
+	            if ( data.hierarchy[ h ].keys[ k ].rot !== undefined &&
+	              ! ( data.hierarchy[ h ].keys[ k ].rot instanceof THREE.Quaternion ) ) {
+
+	               var quat = data.hierarchy[ h ].keys[ k ].rot;
+	               data.hierarchy[ h ].keys[ k ].rot = new THREE.Quaternion().fromArray( quat );
+
+	            }
+
+	         }
+
+	         // prepare morph target keys
+
+	         if ( data.hierarchy[ h ].keys.length && data.hierarchy[ h ].keys[ 0 ].morphTargets !== undefined ) {
+
+	            // get all used
+
+	            var usedMorphTargets = {};
+
+	            for ( var k = 0; k < data.hierarchy[ h ].keys.length; k ++ ) {
+
+	               for ( var m = 0; m < data.hierarchy[ h ].keys[ k ].morphTargets.length; m ++ ) {
+
+	                  var morphTargetName = data.hierarchy[ h ].keys[ k ].morphTargets[ m ];
+	                  usedMorphTargets[ morphTargetName ] = - 1;
+
+	               }
+
+	            }
+
+	            data.hierarchy[ h ].usedMorphTargets = usedMorphTargets;
+
+
+	            // set all used on all frames
+
+	            for ( var k = 0; k < data.hierarchy[ h ].keys.length; k ++ ) {
+
+	               var influences = {};
+
+	               for ( var morphTargetName in usedMorphTargets ) {
+
+	                  for ( var m = 0; m < data.hierarchy[ h ].keys[ k ].morphTargets.length; m ++ ) {
+
+	                     if ( data.hierarchy[ h ].keys[ k ].morphTargets[ m ] === morphTargetName ) {
+
+	                        influences[ morphTargetName ] = data.hierarchy[ h ].keys[ k ].morphTargetsInfluences[ m ];
+	                        break;
+
+	                     }
+
+	                  }
+
+	                  if ( m === data.hierarchy[ h ].keys[ k ].morphTargets.length ) {
+
+	                     influences[ morphTargetName ] = 0;
+
+	                  }
+
+	               }
+
+	               data.hierarchy[ h ].keys[ k ].morphTargetsInfluences = influences;
+
+	            }
+
+	         }
+
+
+	         // remove all keys that are on the same time
+
+	         for ( var k = 1; k < data.hierarchy[ h ].keys.length; k ++ ) {
+
+	            if ( data.hierarchy[ h ].keys[ k ].time === data.hierarchy[ h ].keys[ k - 1 ].time ) {
+
+	               data.hierarchy[ h ].keys.splice( k, 1 );
+	               k --;
+
+	            }
+
+	         }
+
+
+	         // set index
+
+	         for ( var k = 0; k < data.hierarchy[ h ].keys.length; k ++ ) {
+
+	            data.hierarchy[ h ].keys[ k ].index = k;
+
+	         }
+
+	      }
+
+	      data.initialized = true;
+
+	      return data;
+
+	   },
+
+	   parse: function ( root ) {
+
+	      var parseRecurseHierarchy = function ( root, hierarchy ) {
+
+	         hierarchy.push( root );
+
+	         for ( var c = 0; c < root.children.length; c ++ )
+	            parseRecurseHierarchy( root.children[ c ], hierarchy );
+
+	      };
+
+	      // setup hierarchy
+
+	      var hierarchy = [];
+
+	      if ( root instanceof THREE.SkinnedMesh ) {
+
+	         for ( var b = 0; b < root.skeleton.bones.length; b ++ ) {
+
+	            hierarchy.push( root.skeleton.bones[ b ] );
+
+	         }
+
+	      } else {
+
+	         parseRecurseHierarchy( root, hierarchy );
+
+	      }
+
+	      return hierarchy;
+
+	   },
+
+	   play: function ( animation ) {
+
+	      if ( this.animations.indexOf( animation ) === - 1 ) {
+
+	         this.animations.push( animation );
+
+	      }
+
+	   },
+
+	   stop: function ( animation ) {
+
+	      var index = this.animations.indexOf( animation );
+
+	      if ( index !== - 1 ) {
+
+	         this.animations.splice( index, 1 );
+
+	      }
+
+	   },
+
+	   update: function ( deltaTimeMS ) {
+
+	      for ( var i = 0; i < this.animations.length; i ++ ) {
+
+	         this.animations[ i ].resetBlendWeights();
+
+	      }
+
+	      for ( var i = 0; i < this.animations.length; i ++ ) {
+
+	         this.animations[ i ].update( deltaTimeMS );
+
+	      }
+
+	   }
 
 	};
 
