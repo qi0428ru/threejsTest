@@ -112,13 +112,13 @@ var LoadMesh = {
    //路径是相对于该网页的
    blenderCreate: function(){
       var loader = new Three.JSONLoader();
-      loader.load('../../../assets/misc_chair01.js', function(geom, mat){
+      loader.load('/script/assets/misc_chair01.js', function(geom, mat){
          this.mesh = new Three.Mesh(geometry, mat[0]);
          this.mesh.scale.x = 15;
          this.mesh.scale.y = 15;
          this.mesh.scale.z = 15;
          self.scene.add(this.mesh);
-      }, '../../../assets/');
+      }, '/script/assets/');
    },
 /****************************************************/
    render: function(){

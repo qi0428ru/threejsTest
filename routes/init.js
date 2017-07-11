@@ -10,6 +10,7 @@ var chapter07 = require('./page/chapter07');
 var chapter08 = require('./page/chapter08');
 var chapter09 = require('./page/chapter09');
 var collada = require('./page/collada');
+var twentyth = require('./page/20th');
 var whs = require('./page/whs');
 
 
@@ -26,6 +27,7 @@ module.exports = function(express, app) {
    app.use('/chapter08', chapter08);
    app.use('/chapter09', chapter09);
    app.use('/collada', collada);
+   app.use('/20th', twentyth);
    app.use('/whs', whs);
 
 };
